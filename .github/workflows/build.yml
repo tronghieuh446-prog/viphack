@@ -13,27 +13,56 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Download substrate header
+    - name: Setup Xcode
       run: |
-        curl -L -o substrate.h https://raw.githubusercontent.com/theos/theos/master/include/substrate.h
+        sudo xcode-select -s /Applications/Xcode_15.2.app/Contents/Developer
+        
+    - name: Create substrate header
+      run: |
+        cat > substrate.h << 'EOF'
+#ifndef SUBSTRATE_H_
+#define SUBSTRATE_H_
+
+#include <objc/runtime.h>
+#include <objc/message.h>
+#include <mach/mach.h>
+#include <dlfcn.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void MSHookFunction(void *symbol, void *hook, void **original);
+void MSHookMessageEx(Class cls, SEL sel, IMP imp, IMP *original);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
         sudo mkdir -p /usr/local/include
         sudo cp substrate.h /usr/local/include/
-        
-    - name: Install ldid
-      run: |
-        brew install ldid
-        
+
     - name: Compile Dylib
       run: |
-        clang++ -arch arm64 -dynamiclib -O2 -mios-version-min=15.0 \
-          -isysroot $(xcrun --sdk iphoneos --show-sdk-path) \
+        SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
+        clang++ -arch arm64 \
+          -dynamiclib \
+          -O2 \
+          -mios-version-min=15.0 \
+          -isysroot "$SDK_PATH" \
           -I/usr/local/include \
-          -framework Foundation -framework CoreFoundation -framework UIKit \
-          -o FFHack.dylib FFHack.mm
-        
-    - name: Sign Dylib
+          -framework Foundation \
+          -framework CoreFoundation \
+          -framework UIKit \
+          -o FFHack.dylib \
+          FFHack.mm \
+          -Wno-deprecated-declarations
+
+    - name: Check output
       run: |
-        ldid -S FFHack.dylib
+        ls -la FFHack.dylib
+        file FFHack.dylib
         
     - name: Upload artifact
       uses: actions/upload-artifact@v4
