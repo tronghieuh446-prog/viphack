@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-13
     
     steps:
     - name: Checkout code
@@ -16,17 +16,18 @@ jobs:
     - name: Download substrate header
       run: |
         curl -L -o substrate.h https://raw.githubusercontent.com/theos/theos/master/include/substrate.h
+        sudo mkdir -p /usr/local/include
+        sudo cp substrate.h /usr/local/include/
         
-    - name: Download ldid
+    - name: Install ldid
       run: |
-        curl -L -o ldid https://github.com/ProcursusTeam/ldid/releases/download/v2.1.5/ldid_macosx_arm64
-        chmod +x ldid
-        sudo mv ldid /usr/local/bin/
+        brew install ldid
         
     - name: Compile Dylib
       run: |
         clang++ -arch arm64 -dynamiclib -O2 -mios-version-min=15.0 \
           -isysroot $(xcrun --sdk iphoneos --show-sdk-path) \
+          -I/usr/local/include \
           -framework Foundation -framework CoreFoundation -framework UIKit \
           -o FFHack.dylib FFHack.mm
         
