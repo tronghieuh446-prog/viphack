@@ -13,7 +13,7 @@ jobs:
       
     - name: Create substrate.h
       run: |
-        cat > substrate.h << 'EOF'
+        cat > substrate.h << 'ENDOFFILE'
         #ifndef SUBSTRATE_H_
         #define SUBSTRATE_H_
         #ifdef __cplusplus
@@ -25,13 +25,12 @@ jobs:
         }
         #endif
         #endif
-        EOF
+        ENDOFFILE
         
     - name: Build dylib
       run: |
         SDK=$(xcrun --sdk iphoneos --show-sdk-path)
-        clang++ -arch arm64 -dynamiclib -O2 -mios-version-min=15.0 -isysroot "$SDK" -I. -framework Foundation -framework CoreFoundation -framework UIKit -o FFHack.dylib FFHack.mm 2>&1
-        echo "Exit code: $?"
+        clang++ -arch arm64 -dynamiclib -O2 -mios-version-min=15.0 -isysroot "$SDK" -I. -framework Foundation -framework CoreFoundation -framework UIKit -o FFHack.dylib FFHack.mm
         ls -la FFHack.dylib
         
     - name: Upload
